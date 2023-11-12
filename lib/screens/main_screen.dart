@@ -3,20 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'qr_scan_screen.dart';
 import 'package:assistech/models/shared_preferences_service.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class GeoFencingScreen extends StatefulWidget {
   const GeoFencingScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _GeoFencingScreenState createState() => _GeoFencingScreenState();
 }
 
 class _GeoFencingScreenState extends State<GeoFencingScreen> {
   int _selectedIndex = 1;
   final SharedPreferencesService _sharedPreferencesService = SharedPreferencesService();
+  late YoutubePlayerController _youtubeController;
 
-   void _onItemTapped(int index) {
+  @override
+  void initState() {
+    super.initState();
+    // Inicializa el controlador de YouTube con el ID de video inicial
+    _youtubeController = YoutubePlayerController(
+      initialVideoId: 'aSQUg-h8G4s',
+      flags: YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
       if (index == 2) {
@@ -25,6 +39,8 @@ class _GeoFencingScreenState extends State<GeoFencingScreen> {
           MaterialPageRoute(builder: (context) => const QRScanScreen()),
         );
       } else if (index == 0) {
+        // Pausa el video cuando cambias de vista
+        _pauseVideo();
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const GeoFencingMonitorScreen(geofenceStream: null,)), // Reemplaza GeoFencingMonitorScreen con tu Screen real
@@ -34,74 +50,88 @@ class _GeoFencingScreenState extends State<GeoFencingScreen> {
   }
 
   void _showLogoutDialog() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text(
-          'Cerrar Sesión',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Poppins',
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Cerrar Sesión',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+            ),
           ),
-        ),
-        content: const Text(
-          '¿Estás seguro de que deseas cerrar sesión?',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Poppins',
+          content: const Text(
+            '¿Estás seguro de que deseas cerrar sesión?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+            ),
           ),
-        ),
-        actions: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                    ),
                   ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              const Spacer(),
-              TextButton(
-                child: const Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
+                const Spacer(),
+                TextButton(
+                  child: const Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                    ),
                   ),
+                  onPressed: () async {
+                    await _sharedPreferencesService.clearUserDetails();
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushReplacementNamed('/login');
+                  },
                 ),
-                onPressed: () async {
-                  await _sharedPreferencesService.clearUserDetails();                 // Aquí puede añadir su lógica para cerrar sesión
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pushReplacementNamed('/login');
-                },
-              ),
-            ],
-          ),
-        ],
-      );
-    },
-  );
-}
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  Widget _buildYoutubePlayer() {
+    return YoutubePlayer(
+      controller: _youtubeController,
+      liveUIColor: Colors.amber,
+    );
+  }
+
+  void _pauseVideo() {
+    if (_youtubeController.value.isPlaying) {
+      _youtubeController.pause();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar(),
-      body: const Center(
+      body: Center(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              _buildYoutubePlayer(),
+              const SizedBox(height: 20.0),
+              const Text(
                 'Bienvenido a la Pantalla de Geofencing',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -109,7 +139,6 @@ class _GeoFencingScreenState extends State<GeoFencingScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 20.0),
             ],
           ),
         ),

@@ -3,105 +3,132 @@ import 'package:assistech/screens/profesor_schedule_page.dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:assistech/models/shared_preferences_service.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class ProfesorScreen extends StatefulWidget {
   const ProfesorScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ProfesorScreenState createState() => _ProfesorScreenState();
 }
 
 class _ProfesorScreenState extends State<ProfesorScreen> {
   int _selectedIndex = 1;
   final SharedPreferencesService _sharedPreferencesService = SharedPreferencesService();
+  late YoutubePlayerController _youtubeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _youtubeController = YoutubePlayerController(
+      initialVideoId: 'aSQUg-h8G4s',
+      flags: YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+      ),
+    );
+  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 0) { // Suponiendo que "Lista de estudiantes" es el primer ítem
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => FiltrarAsistenciaScreen()),
-    );
-  } else if (index == 2) { // Esto ya estaba en tu código original para "Generar QR"
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ProfesorSchedulePage()),
-    );
-  }
+    if (index == 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => FiltrarAsistenciaScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfesorSchedulePage()),
+      );
+    }
+    // Pausa el video cuando cambias de vista
+    _pauseVideo();
   }
 
   void _showLogoutDialog() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text(
-          'Cerrar Sesión',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Poppins',
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Cerrar Sesión',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+            ),
           ),
-        ),
-        content: const Text(
-          '¿Estás seguro de que deseas cerrar sesión?',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Poppins',
+          content: const Text(
+            '¿Estás seguro de que deseas cerrar sesión?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+            ),
           ),
-        ),
-        actions: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                    ),
                   ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              const Spacer(),
-              TextButton(
-                child: const Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
+                const Spacer(),
+                TextButton(
+                  child: const Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                    ),
                   ),
+                  onPressed: () async {
+                    await _sharedPreferencesService.clearUserDetails();
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushReplacementNamed('/login');
+                  },
                 ),
-                onPressed: () async {
-                  await _sharedPreferencesService.clearUserDetails();                 // Aquí puede añadir su lógica para cerrar sesión
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pushReplacementNamed('/login');
-                },
-              ),
-            ],
-          ),
-        ],
-      );
-    },
-  );
-}
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  Widget _buildYoutubePlayer() {
+    return YoutubePlayer(
+      controller: _youtubeController,
+      liveUIColor: Colors.amber,
+    );
+  }
+
+  void _pauseVideo() {
+    if (_youtubeController.value.isPlaying) {
+      _youtubeController.pause();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar(),
-      body: const Center(
+      body: Center(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 'Bienvenido a la Pantalla Profesor de Geofencing',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -109,7 +136,8 @@ class _ProfesorScreenState extends State<ProfesorScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
+              _buildYoutubePlayer(),
             ],
           ),
         ),
