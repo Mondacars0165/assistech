@@ -46,20 +46,22 @@ class ApiService {
 }
 
 
+Future<Map<String, dynamic>> register(String rut, String password, String rol_id) async {
+  final response = await http.post(
+    Uri.parse('http://192.168.1.10:3000/register'),
+    body: jsonEncode({'rut': rut, 'password': password, 'rol_id': rol_id}),
+    headers: {'Content-Type': 'application/json'},
+  );
 
-  Future<Map<String, dynamic>> register(String rut, String password, String roleId) async {
-    final response = await http.post(
-      Uri.parse('http://192.168.1.10:3000/register'), // Asegúrate de que esta es la ruta correcta para tu endpoint de registro
-      body: jsonEncode({'rut': rut, 'password': password, 'roleId': roleId}),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Error al registrarse');
-    }
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Error al registrarse');
   }
+}
+
+
+
 
    Future<List<dynamic>> getRoles() async {
     final response = await client.get(

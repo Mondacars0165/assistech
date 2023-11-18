@@ -10,8 +10,8 @@ import 'package:assistech/screens/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
+  const LoginPage({Key? key, required this.apiService}) : super(key: key);
+  final ApiService apiService;
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
