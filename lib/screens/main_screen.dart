@@ -1,9 +1,9 @@
-import 'package:assistech/screens/geofencing_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'qr_scan_screen.dart';
-import 'package:assistech/models/shared_preferences_service.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'qr_scan_screen.dart';
+import 'package:assistech/screens/geofencing_status.dart';
+import 'package:assistech/models/shared_preferences_service.dart';
 
 class GeoFencingScreen extends StatefulWidget {
   const GeoFencingScreen({super.key});
@@ -14,13 +14,15 @@ class GeoFencingScreen extends StatefulWidget {
 
 class _GeoFencingScreenState extends State<GeoFencingScreen> {
   int _selectedIndex = 1;
-  final SharedPreferencesService _sharedPreferencesService = SharedPreferencesService();
+  final SharedPreferencesService _sharedPreferencesService =
+      SharedPreferencesService();
   late YoutubePlayerController _youtubeController;
+  bool _isVideoVisible = false;
+  bool _showButton = true;
 
   @override
   void initState() {
     super.initState();
-    // Inicializa el controlador de YouTube con el ID de video inicial
     _youtubeController = YoutubePlayerController(
       initialVideoId: 'aSQUg-h8G4s',
       flags: YoutubePlayerFlags(
@@ -39,11 +41,14 @@ class _GeoFencingScreenState extends State<GeoFencingScreen> {
           MaterialPageRoute(builder: (context) => const QRScanScreen()),
         );
       } else if (index == 0) {
-        // Pausa el video cuando cambias de vista
         _pauseVideo();
+        _hideVideo();
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const GeoFencingMonitorScreen(geofenceStream: null,)), // Reemplaza GeoFencingMonitorScreen con tu Screen real
+          MaterialPageRoute(
+            builder: (context) =>
+                const GeoFencingMonitorScreen(geofenceStream: null),
+          ),
         );
       }
     });
@@ -106,10 +111,12 @@ class _GeoFencingScreenState extends State<GeoFencingScreen> {
   }
 
   Widget _buildYoutubePlayer() {
-    return YoutubePlayer(
-      controller: _youtubeController,
-      liveUIColor: Colors.amber,
-    );
+    return _isVideoVisible
+        ? YoutubePlayer(
+            controller: _youtubeController,
+            liveUIColor: Colors.amber,
+          )
+        : Container();
   }
 
   void _pauseVideo() {
@@ -118,30 +125,65 @@ class _GeoFencingScreenState extends State<GeoFencingScreen> {
     }
   }
 
+  void _hideVideo() {
+    setState(() {
+      _isVideoVisible = false;
+      _showButton = true;
+    });
+  }
+
+  void _showVideo() {
+    setState(() {
+      _isVideoVisible = true;
+      _showButton = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar(),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildYoutubePlayer(),
-              const SizedBox(height: 20.0),
-              const Text(
-                'Bienvenido a la Pantalla de Geofencing',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Bienvenido a la Pantalla de Geofencing',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
+          const SizedBox(height: 20.0),
+          if (!_isVideoVisible)
+            Column(
+              children: [
+                const Text(
+                  'Presiona el botón para ver un video sobre cómo utilizar la aplicación.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16.0,
+                  ),
+                ),
+                const SizedBox(height: 20.0),
+                ElevatedButton(
+                  onPressed: () {
+                    _showVideo();
+                  },
+                  child: const Text('Mostrar Video'),
+                ),
+              ],
+            ),
+          if (_isVideoVisible) // Mostrar el botón "Ocultar Video" si el video está visible
+            ElevatedButton(
+              onPressed: () {
+                _hideVideo();
+              },
+              child: const Text('Ocultar Video'),
+            ),
+          const SizedBox(height: 20.0),
+          _buildYoutubePlayer(),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
